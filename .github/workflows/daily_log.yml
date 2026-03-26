@@ -1,0 +1,30 @@
+name: Daily Problem Log Update
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight UTC
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  update_log:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install feedparser requests
+      - name: Run extractor
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python automate_problem_extraction.py
+      - name: Commit and Push
+        run: |
+          git config --global user.name "LogBot"
+          git config --global user.email "bot@example.com"
+          git add problem_log.md
+          git commit -m "Update Daily Problem Log: $(date)" || echo "No changes to commit"
+          git push
